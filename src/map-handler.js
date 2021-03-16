@@ -103,10 +103,6 @@ export class MapHandler {
 
     // Map events
     this.map.on('move', this.onMapMoveBound);
-    // this.map.on('zoomend', () => {
-    //   console.log(this.cy.zoom(), this.map.getZoom());
-    //   this.cy.zoom(this.map.getZoom() + 1);
-    // });
 
     // Cytoscape unit viewport
     this.originalZoom = this.cy.zoom();
