@@ -1,12 +1,10 @@
-# cytoscape-mapbox-gl
+# cytoscape-leaflet
 
-[![](https://img.shields.io/npm/dm/cytoscape-mapbox-gl)](https://www.npmjs.com/package/cytoscape-mapbox-gl)
-[![](https://img.shields.io/david/zakjan/cytoscape-mapbox-gl)](https://www.npmjs.com/package/cytoscape-mapbox-gl)
-[![](https://img.shields.io/bundlephobia/min/cytoscape-mapbox-gl)](https://www.npmjs.com/package/cytoscape-mapbox-gl)
+Based on [cytoscape-mapbox-gl](https://zakjan.github.io/cytoscape-leaflet/) by [zakjan](https://github.com/zakjan/)
 
-Mapbox GL plugin for Cytoscape
+Leaflet plugin for Cytoscape
 
-[Demo](https://zakjan.github.io/cytoscape-mapbox-gl/)
+[Demo](https://aleksplus.github.io/cytoscape-leaflet/)
 
 <img src="docs/screenshot@2x.jpg" alt="Screenshot" width="640" height="320">
 

@@ -11,11 +11,11 @@ function bundle(filename, options = {}) {
     output: {
       file: filename,
       format: 'umd',
-      name: 'CytoscapeMapbox',
+      name: 'CytoscapeLeaflet',
       sourcemap: true,
       globals: {
         'cytoscape': 'cytoscape',
-        'mapbox-gl': 'mapboxgl'
+        'leaflet': 'L'
       },
     },
     external: [

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <title>cytoscape-mapbox-gl</title>
-  <script src="https://api.mapbox.com/mapbox-gl-js/v1.13.0/mapbox-gl.js"></script>
-  <link href="https://api.mapbox.com/mapbox-gl-js/v1.13.0/mapbox-gl.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
   <script src="https://unpkg.com/cytoscape@3.15.2/dist/cytoscape.min.js"></script>
   <script src="https://unpkg.com/jquery@3.5.1/dist/jquery.js"></script>
   <script src="https://unpkg.com/cytoscape-panzoom@2.5.3/cytoscape-panzoom.js"></script>
@@ -13,8 +13,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.10/lodash.js"></script>
   <script src="https://unpkg.com/cytoscape-edgehandles@3.6.0/cytoscape-edgehandles.js"></script>
   <script src="https://unpkg.com/cytoscape-lasso@1.1.4/dist/cytoscape-lasso.min.js"></script>
-  <script src="https://unpkg.com/cytoscape-mapbox-gl@1.2.0/dist/cytoscape-mapbox-gl.js"></script>
-  <!-- <script src="../dist/cytoscape-mapbox-gl.js"></script> -->
+  <script src="../dist/cytoscape-leaflet.js"></script>
   <style>
     body {
       margin: 0;
@@ -28,6 +27,9 @@
       top: 10px;
       left: 52px;
     }
+    .leaflet-container {
+      z-index: 0;
+    }
     .hide {
       display: none;
     }
@@ -37,10 +39,6 @@
   <div id="graph"></div>
   <div id="controls">
     <button id="mode">Toggle Map</button>
-    <select id="basemap" class="hide">
-      <option value="vector">Vector</option>
-      <option value="raster">Raster</option>
-    </select>
     <div style="height: 10px"></div>
     <button id="add-node">Add Node</button>
     <button id="reset-view">Reset View</button>
@@ -181,12 +179,16 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (!cyMap) {
       cy.panzoom('destroy');
 
-      cyMap = cy.mapboxgl({
-        accessToken: 'pk.eyJ1IjoiemFramFuIiwiYSI6ImNrZjVjeXVmYjBseDQyem1kcHU3d3FxdHQifQ.NxZLZbjHrnz8v1rNUwW3YA', // cytoscape-mapbox-gl token
-        style: 'mapbox://styles/mapbox/streets-v11'
+      cyMap = cy.L({
+        minZoom: 0,
+        maxZoom: 18,
       }, {
         getPosition: (node) => {
-          return [node.data('lng'), node.data('lat')];
+          const lng = node.data('lng');
+          const lat = node.data('lat');
+          return typeof lng === "number" && typeof lat === "number"
+            ? {lat, lng}
+            : null;
         },
         setPosition: (node, lngLat) => {
           node.data('lng', lngLat.lng);
@@ -196,48 +198,21 @@ window.addEventListener('DOMContentLoaded', async () => {
         animate: true,
         animationDuration: 1000,
       });
-      cyMap.map.addControl(new mapboxgl.NavigationControl(), 'top-left');
+      window.cyMap = cyMap;
+      L.tileLayer('//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        minZoom: 0,
+        maxZoom: 18,
+      }).addTo(cyMap.map);
 
-      document.getElementById('basemap').classList.remove('hide');
     } else {
       cyMap.destroy();
       cyMap = undefined;
 
       cy.panzoom();
-      document.getElementById('basemap').classList.add('hide');
     }
   };
   document.getElementById('mode').addEventListener('click', toggleMap);
   cy.ready(() => toggleMap());
-  
-  const updateBasemap = () => {
-    const basemap = document.getElementById('basemap').value;
-    if (basemap === 'vector') {
-      cyMap.map.setStyle('mapbox://styles/mapbox/streets-v11', { diff: false });
-    } else if (basemap === 'raster') {
-      cyMap.map.setStyle({
-        'version': 8,
-        'sources': {
-          'raster-tiles': {
-            'type': 'raster',
-            'tiles': ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-            'tileSize': 256,
-            'attribution': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          }
-        },
-        'layers': [
-          {
-            'id': 'raster-tiles',
-            'type': 'raster',
-            'source': 'raster-tiles',
-            'minzoom': 0,
-            'maxzoom': 19
-          }
-        ]
-      }, { diff: false });
-    }
-  }
-  document.getElementById('basemap').addEventListener('change', updateBasemap);
 
   const minLng = cy.nodes().reduce((acc, node) => Math.min(acc, node.data('lng') || acc), Infinity);
   const maxLng = cy.nodes().reduce((acc, node) => Math.max(acc, node.data('lng') || acc), -Infinity);
@@ -270,7 +245,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (!cyMap) {
       cy.fit(undefined, 50);
     } else {
-      cyMap.fit(undefined, { padding: 50 });
+      cyMap.fit(undefined, { padding: [50, 50] });
     }
   };
   document.getElementById('reset-view').addEventListener('click', resetView);
