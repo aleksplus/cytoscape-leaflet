@@ -8,7 +8,7 @@ Leaflet plugin for Cytoscape
 
 <img src="docs/screenshot@2x.jpg" alt="Screenshot" width="640" height="320">
 
-Compatible with Mapbox GL v1.13 or earlier. Compatibility with v2 is not guaranteed due to [license change](https://github.com/mapbox/mapbox-gl-js/issues/10162). Compatibility with MapLibre fork is under consideration.
+Compatible with Leaflet v1.7 or v0.7.
 
 Compatible with Cytoscape plugins:
 
@@ -25,15 +25,7 @@ Incompatible with Cytoscape plugins:
 ## Install
 
 ```
-npm install mapbox-gl-js cytoscape-mapbox-gl
-```
-
-or
-
-```
-<script src="https://api.mapbox.com/mapbox-gl-js/v1.13.0/mapbox-gl.js"></script>
-<link href="https://api.mapbox.com/mapbox-gl-js/v1.13.0/mapbox-gl.css" rel="stylesheet">
-<script src="https://unpkg.com/cytoscape-mapbox-gl@1.2.0/dist/cytoscape-mapbox-gl.min.js"></script>
+npm install leaflet aleksplus/cytoscape-leaflet#master
 ```
 
 ## Usage
@@ -42,9 +34,9 @@ The plugin exposes a single function, which should be used to register the plugi
 
 ```
 import cytoscape from 'cytoscape';
-import cytoscapeMapboxgl from 'cytoscape-mapbox-gl';
+import cytoscapeLeaflet from 'cytoscape-leaflet';
 
-cytoscape.use(cytoscapeMapboxgl);
+cytoscape.use(cytoscapeLeaflet);
 ```
 
 Plain HTML/JS has the extension registered for you automatically.
@@ -52,17 +44,19 @@ Plain HTML/JS has the extension registered for you automatically.
 ### API
 
 ```
-export interface MapboxglHandlerOptions {
-  getPosition: (node: cytoscape.NodeSingular) => mapboxgl.LngLatLike;
-  setPosition?: (node: cytoscape.NodeSingular, lngLat: mapboxgl.LngLat) => void;
+import {LatLng} from "leaflet";
+
+export interface MapOptions {
+  getPosition: (node: cytoscape.NodeSingular) => LatLng;
+  setPosition?: (node: cytoscape.NodeSingular, lngLat: LatLng) => void;
   animate?: boolean;
   animationDuration?: number;
 }
 
-const cyMap = cy.mapboxgl(mapboxOptions: mapboxgl.MapboxOptions, options: MapboxglHandlerOptions);
+const cyMap = cy.mapboxgl(mapboxOptions: mapboxgl.MapboxOptions, options: MapOptions);
 ```
 
-- `mapboxglOptions` - see [Mapbox GL JS docs](https://docs.mapbox.com/mapbox-gl-js/api/map/) for detailed documentation
+- `mapOptions` - see [Leaflet docs](https://leafletjs.com/reference-1.7.1.html#map-option) for detailed documentation
 - `options`
   - `getPosition` - function, should return node position, **required**
   - `setPosition` - function, should save the node position
@@ -79,7 +73,11 @@ If node dragging is kept enabled and no `setPosition` option is provided, or `se
 cy.autoungrabify(true); // disable node dragging
 const cyMap = cy.mapboxgl(..., {
   getPosition: (node) => {
-    return [node.data('lng'), node.data('lat')];
+    const lng = node.data('lng');
+    const lat = node.data('lat');
+    return typeof lng === "number" && typeof lat === "number"
+      ? {lat, lng}
+      : null;
   }
 });
 ```
@@ -89,7 +87,11 @@ const cyMap = cy.mapboxgl(..., {
 ```
 const cyMap = cy.mapboxgl(..., {
   getPosition: (node) => {
-    return [node.data('lng'), node.data('lat')];
+    const lng = node.data('lng');
+    const lat = node.data('lat');
+    return typeof lng === "number" && typeof lat === "number"
+      ? {lat, lng}
+      : null;
   },
   setPosition: (node, lngLat) => {
     node.data('lng', lngLat.lng);
@@ -101,52 +103,33 @@ const cyMap = cy.mapboxgl(..., {
 ### Use raster basemap layer
 
 ```
-const cyMap = cy.mapboxgl({
-  style: {
-    'version': 8,
-    'sources': {
-      'raster-tiles': {
-        'type': 'raster',
-        'tiles': ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-        'tileSize': 256,
-        'attribution': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }
-    },
-    'layers': [
-      {
-        'id': 'raster-tiles',
-        'type': 'raster',
-        'source': 'raster-tiles',
-        'minzoom': 0,
-        'maxzoom': 19
-      }
-    ]
-  }
-}, ...);
+cyMap = cy.L({
+  minZoom: 0,
+  maxZoom: 18,
+}, {
+  getPosition: (node) => {
+    const lng = node.data('lng');
+    const lat = node.data('lat');
+    return typeof lng === "number" && typeof lat === "number"
+      ? {lat, lng}
+      : null;
+  },
+  setPosition: (node, lngLat) => {
+    node.data('lng', lngLat.lng);
+    node.data('lat', lngLat.lat);
+    console.log(node.id(), lngLat);
+  },
+  animate: true,
+  animationDuration: 1000,
+});
+L.tileLayer('//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  minZoom: 0,
+  maxZoom: 18,
+}).addTo(cyMap.map);
 ```
 
 OpenStreetMap tiles are not recommended for heavy use. See [OpenStreetMap Tile Usage Policy](https://operations.osmfoundation.org/policies/tiles/) for details. See [Tile servers at OpenStreetMap wiki](https://wiki.openstreetmap.org/wiki/Tile_servers) for possible alternatives, or consider commercial alternatives such as [Mapbox](https://studio.mapbox.com/), [Maptiler](https://cloud.maptiler.com/), or running your own tile server.
 
-### Use Mapbox vector basemap layer
-
-```
-const cyMap = cy.mapboxgl({
-  accessToken: '...',
-  style: 'mapbox://styles/mapbox/streets-v11'
-}, ...);
-```
-
-This requires [Mapbox](https://studio.mapbox.com/) access token.
-
-### Use Maptiler vector basemap layer
-
-```
-const cyMap = cy.mapboxgl({
-  style: 'https://api.maptiler.com/maps/basic/style.json?key=...'
-}, ...);
-```
-
-This requires [Maptiler](https://cloud.maptiler.com/) access token.
 
 ### Fit map to nodes
 
@@ -157,18 +140,10 @@ cyMap.fit(nodes = this.cy.nodes(), options)
 - `nodes` - `cytoscape.NodeCollection`, the collection to fit to (default all nodes)
 - `options` - `mapboxgl.FitBoundsOptions`, see [Mapbox GL JS docs](https://docs.mapbox.com/mapbox-gl-js/api/map/#map#fitbounds) for detailed documentation
 
-### Access Mapbox GL instance
+### Access Leaflet instance
 
 ```
 cyMap.map
-```
-
-See [Mapbox GL JS docs](https://docs.mapbox.com/mapbox-gl-js/api/map/) for detailed documentation.
-
-### Add map navigation control
-
-```
-cyMap.map.addControl(new mapboxgl.NavigationControl(), 'top-left');
 ```
 
 ### Destroy
@@ -177,9 +152,3 @@ cyMap.map.addControl(new mapboxgl.NavigationControl(), 'top-left');
 cy.autoungrabify(false); // enable node dragging, if node dragging was disabled earlier with `cy.autoungrabify(true)`
 cyMap.destroy();
 ```
-
-## Sponsors
-
-<a href="https://graphlytic.biz/"><img src="docs/graphlytic.png" alt="Graphlytic" width="250" height="61"></a>
-
-[Graphlytic](https://graphlytic.biz/) is a customizable web application for collaborative graph visualization and analysis. There is a [free version for Neo4j Desktop](https://graphlytic.biz/blog/how-to-install-graphlytic-in-neo4j-desktop) available.
