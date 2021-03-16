@@ -1,7 +1,7 @@
-import mapboxgl from 'mapbox-gl';
+import L from 'leaflet'
 
 /** @typedef {import('cytoscape')} cytoscape */
-/** @typedef {import('./mapbox-gl-handler').MapboxglHandlerOptions} MapboxglHandlerOptions */
+/** @typedef {import('./map-handler').MapHandlerOptions} MapHandlerOptions */
 
 /**
  * @param {MouseEvent} event
@@ -11,21 +11,21 @@ function isMultSelKeyDown(event) {
   return event.shiftKey || event.metaKey || event.ctrlKey; // maybe event.altKey
 }
 
-const DEFAULT_FIT_PADDING = 50;
+const DEFAULT_FIT_PADDING = [50, 50];
 const DEFAULT_ANIMATION_DURATION = 500;
-const HIDDEN_CLASS = 'cytoscape-mapbox-gl__hidden';
+const HIDDEN_CLASS = 'cytoscape-map__hidden';
 
-export class MapboxglHandler {
+export class MapHandler {
   /** @type cytoscape.Core */
   cy;
-  /** @type mapboxgl.MapboxOptions */
-  mapboxOptions;
-  /** @type MapboxglHandlerOptions */
+  /** @type L.MapOptions */
+  mapOptions;
+  /** @type MapHandlerOptions */
   options;
 
   /** @type HTMLElement */
   mapContainer;
-  /** @type mapboxgl.Map */
+  /** @type L.Map */
   map;
 
   /** @type boolean | undefined */
@@ -56,12 +56,12 @@ export class MapboxglHandler {
 
   /**
    * @param {cytoscape.Core} cy
-   * @param {mapboxgl.MapboxOptions} mapboxOptions
-   * @param {MapboxglHandlerOptions} options
+   * @param {L.MapOptions} mapOptions
+   * @param {MapHandlerOptions} options
    */
-  constructor(cy, mapboxOptions, options) {
+  constructor(cy, mapOptions, options) {
     this.cy = cy;
-    this.mapboxOptions = mapboxOptions;
+    this.mapOptions = mapOptions;
     this.options = options;
 
     if (!(this.options.getPosition instanceof Function)) {
@@ -88,7 +88,7 @@ export class MapboxglHandler {
     this.cy.on('resize', this.onGraphResizeBound);
     this.cy.on('dragfree', this.onGraphDragFreeBound);
 
-    // Mapbox GL container
+    // Map container
     this.mapContainer = document.createElement('div');
     this.mapContainer.style.position = 'absolute';
     this.mapContainer.style.top = '0px';
@@ -97,15 +97,16 @@ export class MapboxglHandler {
     this.mapContainer.style.height = '100%';
     graphContainer.insertBefore(this.mapContainer, this.cy.renderer().data.canvasContainer);
 
-    // Mapbox GL instance
-    this.map = new mapboxgl.Map({
-      ...this.mapboxOptions,
-      container: this.mapContainer,
-    });
+    // Leaflet instance
+    this.map = new L.Map(this.mapContainer, this.mapOptions);
     this.fit(undefined, { padding: DEFAULT_FIT_PADDING, animate: false });
 
-    // Mapbox GL events
+    // Map events
     this.map.on('move', this.onMapMoveBound);
+    // this.map.on('zoomend', () => {
+    //   console.log(this.cy.zoom(), this.map.getZoom());
+    //   this.cy.zoom(this.map.getZoom() + 1);
+    // });
 
     // Cytoscape unit viewport
     this.originalZoom = this.cy.zoom();
@@ -152,14 +153,14 @@ export class MapboxglHandler {
     this.originalUserZoomingEnabled = undefined;
     this.originalUserPanningEnabled = undefined;
 
-    // Mapbox GL events
+    // Map events
     this.map.off('move', this.onMapMoveBound);
 
-    // Mapbox GL instance
+    // Map instance
     this.map.remove();
     this.map = undefined;
 
-    // Mapbox GL container
+    // Map container
     this.mapContainer.remove();
     this.mapContainer = undefined;
 
@@ -191,11 +192,11 @@ export class MapboxglHandler {
 
   /**
    * @param {cytoscape.NodeCollection} nodes
-   * @param {mapboxgl.FitBoundsOptions} options
+   * @param {L.FitBoundsOptions} options
    */
   fit(nodes = this.cy.nodes(), options) {
     const bounds = this.getNodeLngLatBounds(nodes);
-    if (bounds.isEmpty()) {
+    if (!bounds.isValid()) {
       return;
     }
 
@@ -236,7 +237,7 @@ export class MapboxglHandler {
 
   /**
    * @private
-   * @param {cytoscape.NodeCollection} nodes
+   * @param {cytoscape.NodeCollection | undefined} nodes
    */
   updateGeographicPositions(nodes = this.cy.nodes()) {
     const positions = /** @type cytoscape.NodePositionMap */ (Object.fromEntries(
@@ -266,6 +267,9 @@ export class MapboxglHandler {
       name: 'preset',
       positions: updatedPositions,
       fit: false,
+      stop: () => {
+        console.log("done");
+      },
     }).run();
   }
 
@@ -370,7 +374,8 @@ export class MapboxglHandler {
    * @private
    */
   onGraphResize() {
-    this.map.resize();
+    // this.map.resize();
+    this.map.invalidateSize(false);
   }
 
   /**
@@ -381,7 +386,7 @@ export class MapboxglHandler {
     const node = /** @type cytoscape.NodeSingular */ (event.target);
 
     if (this.options.setPosition) {
-      const lngLat = this.map.unproject(node.position());
+      const lngLat = this.map.layerPointToLatLng(node.position());
       this.options.setPosition(node, lngLat);
     }
 
@@ -399,13 +404,13 @@ export class MapboxglHandler {
     }
 
     const clonedEvent = new event.constructor(event.type, event);
-    this.map.getCanvas().dispatchEvent(clonedEvent);
+    this.map.getContainer().dispatchEvent(clonedEvent);
   }
 
   /**
    * @private
    * @param {cytoscape.NodeSingular} node
-   * @return {mapboxgl.LngLat | undefined}
+   * @return {L.LatLng | undefined}
    */
   getNodeLngLat(node) {
     const lngLatLike = this.options.getPosition(node);
@@ -415,7 +420,7 @@ export class MapboxglHandler {
 
     let lngLat;
     try {
-      lngLat = mapboxgl.LngLat.convert(lngLatLike);
+      lngLat = L.latLng(lngLatLike);
     } catch (e) {
       return;
     }
@@ -426,7 +431,7 @@ export class MapboxglHandler {
   /**
    * @private
    * @param {cytoscape.NodeCollection} nodes
-   * @return {mapboxgl.LngLatBounds}
+   * @return {L.LatLngBounds}
    */
   getNodeLngLatBounds(nodes = this.cy.nodes()) {
     const bounds = nodes.reduce((bounds, node) => {
@@ -436,7 +441,7 @@ export class MapboxglHandler {
       }
 
       return bounds.extend(lngLat);
-    }, new mapboxgl.LngLatBounds());
+    }, L.latLngBounds([]));
     return bounds;
   }
 
@@ -451,7 +456,7 @@ export class MapboxglHandler {
       return;
     }
 
-    const position = this.map.project(lngLat);
+    const position = this.map.latLngToContainerPoint(lngLat);
     return position;
   }
 

@@ -1,12 +1,12 @@
-import { MapboxglHandler } from './mapbox-gl-handler';
+import { MapHandler } from './map-handler';
 
 function register(cytoscape) {
   if (!cytoscape) {
     return;
   }
 
-  cytoscape('core', 'mapboxgl', function(mapboxglConfig, config) {
-    return new MapboxglHandler(this, mapboxglConfig, config);
+  cytoscape('core', 'L', function(mapConfig, config) {
+    return new MapHandler((this), mapConfig, config);
   });
 }
 
