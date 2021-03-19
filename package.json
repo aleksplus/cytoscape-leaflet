@@ -6,7 +6,10 @@
     "cytoscape",
     "mapbox-gl"
   ],
-  "author": "Jan Zak <zj@zakjan.cz>",
+  "author": "Aleks P. (https://github.com/aleksplus)",
+  "contributors": [
+    "Jan Zak <zj@zakjan.cz> (https://github.com/zakja)"
+  ],
   "license": "MIT",
   "repository": "github:aleksplus/cytoscape-leaflet",
   "main": "src/index.js",
