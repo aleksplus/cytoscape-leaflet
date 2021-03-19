@@ -262,10 +262,7 @@ export class MapHandler {
     this.cy.layout({
       name: 'preset',
       positions: updatedPositions,
-      fit: false,
-      stop: () => {
-        console.log("done");
-      },
+      fit: false
     }).run();
   }
 
