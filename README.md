@@ -8,7 +8,7 @@ Leaflet plugin for Cytoscape
 
 <img src="docs/screenshot@2x.jpg" alt="Screenshot" width="640" height="320">
 
-Compatible with Leaflet v1.7 or v0.7.
+Compatible with Leaflet v1.3.
 
 Compatible with Cytoscape plugins:
 
@@ -18,7 +18,7 @@ Compatible with Cytoscape plugins:
 Incompatible with Cytoscape plugins:
 
 - cytoscape-panzoom
-  - disable with `cy.panzoom('destroy')` after enabling `cy.mapboxgl(...)`
+  - disable with `cy.panzoom('destroy')` after enabling `cy.L(...)`
   - [add map navigation control](#add-map-navigation-control)
   - enable with `cy.panzoom()` after calling `cyMap.destroy()`
 
@@ -53,10 +53,10 @@ export interface MapOptions {
   animationDuration?: number;
 }
 
-const cyMap = cy.mapboxgl(mapboxOptions: mapboxgl.MapboxOptions, options: MapOptions);
+const cyMap = cy.L(mapOptions: L.MapOptions, options: MapOptions);
 ```
 
-- `mapOptions` - see [Leaflet docs](https://leafletjs.com/reference-1.7.1.html#map-option) for detailed documentation
+- `mapOptions` - see [Leaflet docs](https://leafletjs.com/reference-1.3.4.html#map-option) for detailed documentation
 - `options`
   - `getPosition` - function, should return node position, **required**
   - `setPosition` - function, should save the node position
@@ -71,7 +71,7 @@ If node dragging is kept enabled and no `setPosition` option is provided, or `se
 
 ```
 cy.autoungrabify(true); // disable node dragging
-const cyMap = cy.mapboxgl(..., {
+const cyMap = cy.L(..., {
   getPosition: (node) => {
     const lng = node.data('lng');
     const lat = node.data('lat');
@@ -85,7 +85,7 @@ const cyMap = cy.mapboxgl(..., {
 ### Node dragging enabled
 
 ```
-const cyMap = cy.mapboxgl(..., {
+const cyMap = cy.L(..., {
   getPosition: (node) => {
     const lng = node.data('lng');
     const lat = node.data('lat');
@@ -138,7 +138,7 @@ cyMap.fit(nodes = this.cy.nodes(), options)
 ```
 
 - `nodes` - `cytoscape.NodeCollection`, the collection to fit to (default all nodes)
-- `options` - `mapboxgl.FitBoundsOptions`, see [Mapbox GL JS docs](https://docs.mapbox.com/mapbox-gl-js/api/map/#map#fitbounds) for detailed documentation
+- `options` - `L.FitBoundsOptions`, see [Mapbox GL JS docs](https://docs.mapbox.com/mapbox-gl-js/api/map/#map#fitbounds) for detailed documentation
 
 ### Access Leaflet instance
 
