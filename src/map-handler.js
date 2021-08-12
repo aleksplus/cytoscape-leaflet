@@ -1,6 +1,7 @@
 import L from 'leaflet'
 
 /** @typedef {import('cytoscape')} cytoscape */
+
 /** @typedef {import('./map-handler').MapHandlerOptions} MapHandlerOptions */
 
 /**
@@ -106,7 +107,7 @@ export class MapHandler {
 
     // Cytoscape unit viewport
     this.originalZoom = this.cy.zoom();
-    this.originalPan = {...this.cy.pan()};
+    this.originalPan = { ...this.cy.pan() };
 
     const zoom = 1;
     const pan = { x: 0, y: 0 };
@@ -206,7 +207,7 @@ export class MapHandler {
     const nodes = this.cy.nodes();
 
     this.originalPositions = Object.fromEntries(nodes.map(node => {
-      return [node.id(), {...node.position()}];
+      return [node.id(), { ...node.position() }];
     }));
 
     const positions = /** @type cytoscape.NodePositionMap */ (Object.fromEntries(
@@ -246,7 +247,7 @@ export class MapHandler {
 
     // update only positions which have changed, for cytoscape-edgehandles compatibility
     const currentPositions = /** @type cytoscape.NodePositionMap */ (Object.fromEntries(nodes.map(node => {
-      return [node.id(), {...node.position()}];
+      return [node.id(), { ...node.position() }];
     })));
     const updatedPositions = /** @type cytoscape.NodePositionMap */ (Object.fromEntries(
       Object.entries(positions).filter(([id, position]) => {
@@ -357,7 +358,7 @@ export class MapHandler {
 
     const node = /** @type cytoscape.NodeSingular */ (event.target);
 
-    this.originalPositions[node.id()] = {...node.position()};
+    this.originalPositions[node.id()] = { ...node.position() };
 
     const nodes = this.cy.collection().merge(node);
     this.updateGeographicPositions(nodes);
@@ -367,7 +368,6 @@ export class MapHandler {
    * @private
    */
   onGraphResize() {
-    // this.map.resize();
     this.map.invalidateSize(false);
   }
 

@@ -1,4 +1,5 @@
-import {LatLng} from "leaflet";
+import { LatLng } from 'leaflet';
+import * as cytoscape from 'cytoscape'
 
 export interface MapHandlerOptions {
   getPosition: (node: cytoscape.NodeSingular) => LatLng;

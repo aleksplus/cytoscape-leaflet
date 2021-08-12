@@ -5,7 +5,7 @@ function register(cytoscape) {
     return;
   }
 
-  cytoscape('core', 'L', function(mapConfig, config) {
+  cytoscape('core', 'L', function (mapConfig, config) {
     return new MapHandler((this), mapConfig, config);
   });
 }
