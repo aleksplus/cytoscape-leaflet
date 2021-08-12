@@ -4,7 +4,7 @@ Based on [cytoscape-mapbox-gl](https://zakjan.github.io/cytoscape-mapbox-gl/) by
 
 Leaflet plugin for Cytoscape
 
-[Demo](https://aleksplus.github.io/cytoscape-leaflet/)
+[Demo](https://aleksplus.github.io/cytoscape-leaflet/index.html)
 
 <img src="docs/screenshot@2x.jpg" alt="Screenshot" width="640" height="320">
 
