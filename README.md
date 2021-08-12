@@ -1,6 +1,6 @@
 # cytoscape-leaflet
 
-Based on [cytoscape-mapbox-gl](https://zakjan.github.io/cytoscape-leaflet/) by [zakjan](https://github.com/zakjan/)
+Based on [cytoscape-mapbox-gl](https://zakjan.github.io/cytoscape-mapbox-gl/) by [zakjan](https://github.com/zakjan/)
 
 Leaflet plugin for Cytoscape
 
