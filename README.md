@@ -10,7 +10,7 @@ Leaflet plugin for Cytoscape
 
 Compatible with Leaflet v1.3.
 
-Compatible with Cytoscape plugins:
+**Compatible not tested**, but original plugin for mabox-gl is compatible with Cytoscape plugins:
 
 - [cytoscape-edgehandles](https://github.com/cytoscape/cytoscape.js-edgehandles)
 - [cytoscape-lasso](https://github.com/zakjan/cytoscape-lasso)
@@ -24,15 +24,16 @@ Incompatible with Cytoscape plugins:
 
 ## Install
 
-```
-npm install leaflet aleksplus/cytoscape-leaflet#master
+```bash
+npm install leaflet cytoscape-leaflet
+yarn add leaflet cytoscape-leaflet
 ```
 
 ## Usage
 
 The plugin exposes a single function, which should be used to register the plugin to Cytoscape.js.
 
-```
+```js
 import cytoscape from 'cytoscape';
 import cytoscapeLeaflet from 'cytoscape-leaflet';
 
@@ -43,7 +44,7 @@ Plain HTML/JS has the extension registered for you automatically.
 
 ### API
 
-```
+```js
 import {LatLng} from "leaflet";
 
 export interface MapOptions {
@@ -69,7 +70,7 @@ If node dragging is kept enabled and no `setPosition` option is provided, or `se
 
 ### Basic
 
-```
+```js
 cy.autoungrabify(true); // disable node dragging
 const cyMap = cy.L(..., {
   getPosition: (node) => {
@@ -84,7 +85,7 @@ const cyMap = cy.L(..., {
 
 ### Node dragging enabled
 
-```
+```js
 const cyMap = cy.L(..., {
   getPosition: (node) => {
     const lng = node.data('lng');
@@ -102,7 +103,7 @@ const cyMap = cy.L(..., {
 
 ### Use raster basemap layer
 
-```
+```js
 cyMap = cy.L({
   minZoom: 0,
   maxZoom: 18,
@@ -133,7 +134,7 @@ OpenStreetMap tiles are not recommended for heavy use. See [OpenStreetMap Tile U
 
 ### Fit map to nodes
 
-```
+```js
 cyMap.fit(nodes = this.cy.nodes(), options)
 ```
 
@@ -142,13 +143,13 @@ cyMap.fit(nodes = this.cy.nodes(), options)
 
 ### Access Leaflet instance
 
-```
+```js
 cyMap.map
 ```
 
 ### Destroy
 
-```
+```js
 cy.autoungrabify(false); // enable node dragging, if node dragging was disabled earlier with `cy.autoungrabify(true)`
 cyMap.destroy();
 ```
