@@ -379,7 +379,7 @@ export class MapHandler {
     const node = /** @type cytoscape.NodeSingular */ (event.target);
 
     if (this.options.setPosition) {
-      const lngLat = this.map.layerPointToLatLng(node.position());
+      const lngLat = this.map.containerPointToLatLng(node.position());
       this.options.setPosition(node, lngLat);
     }
 
