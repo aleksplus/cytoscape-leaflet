@@ -4,7 +4,7 @@
   "description": "Leaflet plugin for Cytoscape",
   "keywords": [
     "cytoscape",
-    "mapbox-gl"
+    "leaflet"
   ],
   "author": "Aleks P. (https://github.com/aleksplus)",
   "contributors": [
