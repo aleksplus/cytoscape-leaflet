@@ -18,7 +18,7 @@
     "build": "rimraf dist && rollup -c",
     "dev": "rollup -c -w",
     "test": "jest",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build && npm version patch"
   },
   "peerDependencies": {
     "cytoscape": "^3.15.2",
