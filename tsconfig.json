@@ -2,7 +2,10 @@
   "compilerOptions": {
     "target": "es2020",
     "module": "esnext",
-    "lib": ["dom", "esnext"],
+    "lib": [
+      "dom",
+      "esnext"
+    ],
     "esModuleInterop": true,
     "moduleResolution": "node",
     "outDir": "dist",
@@ -22,6 +25,7 @@
   "exclude": [
     "**/*.test.ts",
     "**/*.test.js",
-    "node_modules"
+    "node_modules",
+    "rollup.config.js"
   ]
 }

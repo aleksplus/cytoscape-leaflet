@@ -5,32 +5,39 @@ import babel from '@rollup/plugin-babel';
 import { terser } from 'rollup-plugin-terser';
 import visualizer from 'rollup-plugin-visualizer';
 
+const extensions = ['.js', '.jsx', '.ts', '.tsx'];
+
 function bundle(filename, options = {}) {
   return {
-    input: 'src/index.js',
+    input: 'src/index.ts',
     output: {
       file: filename,
       format: 'umd',
       name: 'CytoscapeLeaflet',
       sourcemap: true,
       globals: {
-        'cytoscape': 'cytoscape',
-        'leaflet': 'L'
+        cytoscape: 'cytoscape',
+        leaflet: 'L',
       },
     },
-    external: [
-      ...Object.keys(pkg.peerDependencies),
-      'fs',
-      'path',
-    ],
+    external: [...Object.keys(pkg.peerDependencies), 'fs', 'path'],
     plugins: [
-      resolve(),
+      resolve({
+        jsnext: true,
+        extensions,
+      }),
       commonjs(),
-      babel({ babelHelpers: 'runtime' }),
+      babel({
+        extensions,
+        babelHelpers: 'runtime',
+        exclude: 'node_modules/**',
+      }),
       options.minimize ? terser() : false,
-      options.stats ? visualizer({
-        filename: filename + '.stats.html',
-      }) : false,
+      options.stats
+        ? visualizer({
+            filename: filename + '.stats.html',
+          })
+        : false,
     ],
   };
 }
