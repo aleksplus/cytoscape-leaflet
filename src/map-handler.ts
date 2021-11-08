@@ -2,7 +2,7 @@ import L, { PointTuple } from 'leaflet';
 import * as cytoscape from 'cytoscape';
 
 export interface MapHandlerOptions {
-  getPosition: (node: cytoscape.NodeSingular) => L.LatLng | null;
+  getPosition?: (node: cytoscape.NodeSingular) => L.LatLng | null;
   setPosition?: (node: cytoscape.NodeSingular, lngLat: L.LatLng) => void;
   animate?: boolean;
   animationDuration?: number;
@@ -20,16 +20,30 @@ const DEFAULT_ANIMATION_DURATION = 1;
 const HIDDEN_CLASS = 'cytoscape-map__hidden';
 
 interface Core extends cytoscape.Core {
-  renderer(): { data: { canvasContainer: Node } };
+  renderer(): {
+    data: { canvasContainer: Node };
+    hoverData: {
+      down: null | boolean;
+      last: null | boolean;
+      dragging: null | boolean;
+      dragged: null | boolean;
+      draggingEles: null | any[];
+      which: null | number;
+      capture: null | boolean;
+      downTime: null;
+      triggerMode: null;
+      initialPan: [null, null];
+    };
+  };
 }
 
 export class MapHandler {
-  cy: Core;
+  cy: Core | undefined;
   mapOptions: L.MapOptions;
-  options: MapHandlerOptions;
+  options: MapHandlerOptions | undefined;
 
-  mapContainer: HTMLElement;
-  map: L.Map;
+  mapContainer: HTMLElement | undefined;
+  map: L.Map | undefined;
 
   originalAutoungrabify: boolean | undefined;
   originalUserZoomingEnabled: boolean | undefined;
@@ -60,12 +74,12 @@ export class MapHandler {
     this.mapOptions = mapOptions;
     this.options = options;
 
-    if (!(this.options.getPosition instanceof Function)) {
+    if (!(typeof this.options.getPosition === 'function')) {
       throw new Error('getPosition should be a function');
     }
     if (
       this.options.setPosition &&
-      !(this.options.setPosition instanceof Function)
+      !(typeof this.options.setPosition === 'function')
     ) {
       throw new Error('setPosition should be a function');
     }
@@ -139,7 +153,7 @@ export class MapHandler {
 
   destroy() {
     // Cytoscape events
-    const graphContainer = this.cy.container();
+    const graphContainer = this.cy?.container();
     if (graphContainer) {
       graphContainer.removeEventListener(
         'mousedown',
@@ -154,33 +168,34 @@ export class MapHandler {
         this.onGraphContainerWheelBound
       );
     }
-    this.cy.off('add', this.onGraphAddBound);
-    this.cy.off('resize', this.onGraphResizeBound);
-    this.cy.off('dragfree', this.onGraphDragFreeBound);
+    if (this.cy) {
+      this.cy.off('add', this.onGraphAddBound);
+      this.cy.off('resize', this.onGraphResizeBound);
+      this.cy.off('dragfree', this.onGraphDragFreeBound);
 
-    // Cytoscape config
-    this.cy.autoungrabify(this.originalAutoungrabify);
-    this.cy.userZoomingEnabled(this.originalUserZoomingEnabled);
-    this.cy.userPanningEnabled(this.originalUserPanningEnabled);
-
+      // Cytoscape config
+      this.cy.autoungrabify(this.originalAutoungrabify);
+      this.cy.userZoomingEnabled(this.originalUserZoomingEnabled);
+      this.cy.userPanningEnabled(this.originalUserPanningEnabled);
+    }
     this.originalAutoungrabify = undefined;
     this.originalUserZoomingEnabled = undefined;
     this.originalUserPanningEnabled = undefined;
 
     // Map events
-    this.map.off('move', this.onMapMoveBound);
+    this.map?.off('move', this.onMapMoveBound);
 
     // Map instance
-    this.map.remove();
+    this.map?.remove();
     this.map = undefined;
 
     // Map container
-    this.mapContainer.remove();
+    this.mapContainer?.remove();
     this.mapContainer = undefined;
 
     // Cytoscape unit viewport
-    if (this.options.animate) {
-      this.cy.animate(
+    if (this.options?.animate) {
+      this.cy?.animate(
         {
           zoom: this.originalZoom,
           pan: this.originalPan,
@@ -192,7 +207,13 @@ export class MapHandler {
         }
       );
     } else {
-      this.cy.viewport(this.originalZoom, this.originalPan);
+      this.cy?.viewport(
+        this.originalZoom ?? 5,
+        this.originalPan ?? {
+          x: 0,
+          y: 0,
+        }
+      );
     }
 
     this.originalZoom = undefined;
@@ -210,7 +231,8 @@ export class MapHandler {
    * @param {L.FitBoundsOptions} options
    */
   fit(
-    nodes: cytoscape.NodeCollection = this.cy.nodes(),
+    nodes: cytoscape.NodeCollection = this.cy?.nodes() ??
+      ([] as unknown as cytoscape.NodeCollection),
     options: L.FitBoundsOptions
   ) {
     const bounds = this.getNodeLngLatBounds(nodes);
@@ -218,14 +240,15 @@ export class MapHandler {
       return;
     }
 
-    this.map.fitBounds(bounds, options);
+    this.map?.fitBounds(bounds, options);
   }
 
   /**
    * @private
    */
   private enableGeographicPositions() {
-    const nodes = this.cy.nodes();
+    const nodes =
+      this.cy?.nodes() ?? ([] as unknown as cytoscape.NodeCollection);
 
     this.originalPositions = Object.fromEntries(
       nodes.map((node) => {
@@ -248,13 +271,13 @@ export class MapHandler {
     nodesWithoutPosition.addClass(HIDDEN_CLASS).style('display', 'none');
 
     this.cy
-      .layout({
+      ?.layout({
         name: 'preset',
         positions: positions,
         fit: false,
-        animate: this.options.animate,
+        animate: this.options?.animate,
         animationDuration:
-          this.options.animationDuration ?? DEFAULT_ANIMATION_DURATION,
+          this.options?.animationDuration ?? DEFAULT_ANIMATION_DURATION,
         animationEasing: 'ease-out-cubic',
       })
       .run();
@@ -264,7 +287,9 @@ export class MapHandler {
    * @private
    * @param {cytoscape.NodeCollection | undefined} nodes
    */
-  private updateGeographicPositions(nodes = this.cy.nodes()) {
+  private updateGeographicPositions(
+    nodes = this.cy?.nodes() ?? ([] as unknown as cytoscape.NodeCollection)
+  ) {
     const positions: cytoscape.NodePositionMap = Object.fromEntries(
       nodes
         .map((node) => {
@@ -284,7 +309,7 @@ export class MapHandler {
     const updatedPositions: cytoscape.NodePositionMap = Object.fromEntries(
       Object.entries(positions).filter(([id, position]) => {
         const currentPosition = currentPositions[id];
-        return !this.arePositionsEqual(currentPosition, position);
+        return !MapHandler.arePositionsEqual(currentPosition, position);
       })
     );
 
@@ -293,7 +318,7 @@ export class MapHandler {
     nodesWithoutPosition.addClass(HIDDEN_CLASS).style('display', 'none');
 
     this.cy
-      .layout({
+      ?.layout({
         name: 'preset',
         positions: updatedPositions,
         fit: false,
@@ -305,16 +330,17 @@ export class MapHandler {
    * @private
    */
   private disableGeographicPositions() {
-    const nodes = this.cy.nodes();
+    const nodes =
+      this.cy?.nodes() ?? ([] as unknown as cytoscape.NodeCollection);
 
     this.cy
-      .layout({
+      ?.layout({
         name: 'preset',
         positions: this.originalPositions,
         fit: false,
-        animate: this.options.animate,
+        animate: this.options?.animate,
         animationDuration:
-          this.options.animationDuration ?? DEFAULT_ANIMATION_DURATION,
+          this.options?.animationDuration ?? DEFAULT_ANIMATION_DURATION,
         animationEasing: 'ease-in-cubic',
         stop: () => {
           // show nodes without position
@@ -333,13 +359,13 @@ export class MapHandler {
    * @private
    * @param {MouseEvent} event
    */
-  private onGraphContainerMouseDown(event) {
+  private onGraphContainerMouseDown(event: MouseEvent) {
     if (
       event.buttons === 1 &&
       !isMultSelKeyDown(event) &&
-      !this.cy.renderer().hoverData.down
+      !this.cy?.renderer().hoverData.down
     ) {
-      this.cy.renderer().hoverData.dragging = true; // cytoscape-lasso compatibility
+      if (this.cy) this.cy.renderer().hoverData.dragging = true; // cytoscape-lasso compatibility
       this.dispatchMapEvent(event);
 
       document.addEventListener(
@@ -352,7 +378,7 @@ export class MapHandler {
           this.panning = false;
 
           // prevent unselecting in Cytoscape mouseup
-          this.cy.renderer().hoverData.dragged = true;
+          if (this.cy) this.cy.renderer().hoverData.dragged = true;
         },
         { once: true }
       );
@@ -367,7 +393,7 @@ export class MapHandler {
     if (
       event.buttons === 1 &&
       !isMultSelKeyDown(event) &&
-      !this.cy.renderer().hoverData.down
+      !this.cy?.renderer().hoverData.down
     ) {
       this.panning = true;
 
@@ -401,9 +427,10 @@ export class MapHandler {
 
     const node: cytoscape.NodeSingular = event.target;
 
+    if (!this.originalPositions) this.originalPositions = {};
     this.originalPositions[node.id()] = { ...node.position() };
 
-    const nodes = this.cy.collection().merge(node);
+    const nodes = this.cy?.collection().merge(node);
     this.updateGeographicPositions(nodes);
   }
 
@@ -411,7 +438,7 @@ export class MapHandler {
    * @private
    */
   private onGraphResize() {
-    this.map.invalidateSize(false);
+    this.map?.invalidateSize(false);
   }
 
   /**
@@ -421,12 +448,14 @@ export class MapHandler {
   private onGraphDragFree(event: cytoscape.EventObject) {
     const node: cytoscape.NodeSingular = event.target;
 
-    if (this.options.setPosition) {
-      const lngLat = this.map.containerPointToLatLng(node.position());
-      this.options.setPosition(node, lngLat);
+    if (this.options?.setPosition) {
+      const { x, y } = node.position();
+      const position: PointTuple = [x, y];
+      const lngLat = this.map?.containerPointToLatLng(position);
+      if (lngLat) this.options.setPosition(node, lngLat);
     }
 
-    const nodes = this.cy.collection().merge(node);
+    const nodes = this.cy?.collection().merge(node);
     this.updateGeographicPositions(nodes);
   }
 
@@ -437,13 +466,15 @@ export class MapHandler {
   private dispatchMapEvent(event: MouseEvent) {
     if (
       event.target === this.mapContainer ||
-      this.mapContainer.contains(event.target)
+      // @ts-ignore
+      this.mapContainer?.contains(event.target)
     ) {
       return;
     }
 
+    // @ts-ignore
     const clonedEvent = new event.constructor(event.type, event);
-    this.map.getContainer().dispatchEvent(clonedEvent);
+    this.map?.getContainer().dispatchEvent(clonedEvent);
   }
 
   /**
@@ -452,7 +483,9 @@ export class MapHandler {
    * @return {L.LatLng | undefined}
    */
   private getNodeLngLat(node: cytoscape.NodeSingular): L.LatLng | undefined {
-    const lngLatLike = this.options.getPosition(node);
+    if (typeof this.options?.getPosition !== 'function') return;
+
+    const lngLatLike = this.options?.getPosition(node);
     if (!lngLatLike) {
       return;
     }
@@ -473,9 +506,10 @@ export class MapHandler {
    * @return {L.LatLngBounds}
    */
   private getNodeLngLatBounds(
-    nodes: cytoscape.NodeCollection = this.cy.nodes()
+    nodes: cytoscape.NodeCollection = this.cy?.nodes() ??
+      ([] as unknown as cytoscape.NodeCollection)
   ): L.LatLngBounds {
-    const bounds = nodes.reduce((bounds, node) => {
+    return nodes.reduce((bounds, node) => {
       const lngLat = this.getNodeLngLat(node);
       if (!lngLat) {
         return bounds;
@@ -483,7 +517,6 @@ export class MapHandler {
 
       return bounds.extend(lngLat);
     }, L.latLngBounds([]));
-    return bounds;
   }
 
   /**
@@ -499,7 +532,7 @@ export class MapHandler {
       return;
     }
 
-    return this.map.latLngToContainerPoint(lngLat);
+    return this.map?.latLngToContainerPoint(lngLat);
   }
 
   /**
@@ -508,7 +541,7 @@ export class MapHandler {
    * @param {cytoscape.Position} position2
    * @return {boolean}
    */
-  private arePositionsEqual(
+  private static arePositionsEqual(
     position1: cytoscape.Position,
     position2: cytoscape.Position
   ) {
