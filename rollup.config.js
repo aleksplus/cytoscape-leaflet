@@ -4,6 +4,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import babel from '@rollup/plugin-babel';
 import { terser } from 'rollup-plugin-terser';
 import visualizer from 'rollup-plugin-visualizer';
+import typescript from 'rollup-plugin-typescript2';
 
 const extensions = ['.js', '.jsx', '.ts', '.tsx'];
 
@@ -38,6 +39,12 @@ function bundle(filename, options = {}) {
             filename: filename + '.stats.html',
           })
         : false,
+      typescript({
+        rollupCommonJSResolveHack: false,
+        clean: true,
+        check: false,
+        verbosity: 2,
+      }),
     ],
   };
 }

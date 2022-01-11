@@ -1,7 +1,8 @@
-import * as cytoscape from 'cytoscape';
-import { MapHandler, MapHandlerOptions } from './map-handler';
+import L from 'leaflet';
+import { MapHandler } from './mapHandler';
+import { Instance, MapHandlerOptions } from './types';
 
-function register(cytoscape) {
+function register(cytoscape: Instance) {
   if (!cytoscape) {
     return;
   }
@@ -9,11 +10,13 @@ function register(cytoscape) {
   cytoscape(
     'core',
     'L',
-    function (
-      mapConfig: MapHandlerOptions,
-      config: cytoscape.CytoscapeOptions
-    ) {
-      return new MapHandler(this, mapConfig, config);
+    function (mapConfig: L.MapOptions, config: MapHandlerOptions) {
+      return new MapHandler(
+        // @ts-ignore
+        this,
+        mapConfig,
+        config
+      );
     }
   );
 }

@@ -26,6 +26,7 @@
     "**/*.test.ts",
     "**/*.test.js",
     "node_modules",
+    "dist/*",
     "rollup.config.js"
   ]
 }

@@ -1,37 +1,17 @@
-declare module 'cytoscape-leaflet' {
-  namespace cytoscapeLeaflet {
-    export interface CyMap {
-      map: null | L.Map;
-      cy: null | cytoscape.Core;
+import L from 'leaflet';
+import * as cytoscape from 'cytoscape';
 
-      fit(nodes: cytoscape.NodeSingular[], options: L.FitBoundsOptions): void;
-
-      updateGeographicPositions(nodes: cytoscape.NodeSingular): void;
-
-      destroy(): void;
-
-      enableGeographicPositions(): void;
-
-      disableGeographicPositions(): void;
-
-      updateGeographicPositions(): void;
-    }
-  }
+export interface MapHandlerOptions {
+  getPosition: (node: cytoscape.NodeSingular) => L.LatLng | null;
+  setPosition?: (node: cytoscape.NodeSingular, lngLat: L.LatLng) => void;
+  animate?: boolean;
+  animationDuration?: number;
 }
 
-declare global {
-  namespace cytoscape {
+type RegisterFn = (mapConfig: L.MapOptions, config: MapHandlerOptions) => any;
 
-
-    interface MapHandlerOptions {
-      getPosition: (node: cytoscape.NodeSingular) => L.LatLng | null;
-      setPosition?: (node: cytoscape.NodeSingular, lngLat: L.LatLng) => void;
-      animate?: boolean;
-      animationDuration?: number;
-    }
-
-    interface Core extends cytoscape.Core {
-      L: (mapConfig: Leaflet.MapOptions, config: MapHandlerOptions) => CyMap;
-    }
-  }
-}
+export type Instance = (
+  core: string,
+  module: string,
+  fn: RegisterFn
+) => cytoscape.Core;
