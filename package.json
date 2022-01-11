@@ -1,6 +1,6 @@
 {
   "name": "cytoscape-leaflet",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Leaflet plugin for Cytoscape",
   "keywords": [
     "cytoscape",
