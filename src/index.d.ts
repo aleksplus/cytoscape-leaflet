@@ -43,7 +43,7 @@ declare global {
       };
     };
 
-    interface Core {
+    interface Core extends cy.Core {
       L(
         mapConfig: L.MapOptions,
         config: MapHandlerOptions
