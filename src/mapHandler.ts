@@ -1,12 +1,6 @@
 import L, { PointTuple } from 'leaflet';
 import { MapHandlerOptions } from './types';
-
-/**
- * @see https://github.com/cytoscape/cytoscape.js/blob/master/src/extensions/renderer/base/load-listeners.js
- */
-function isMultSelKeyDown(event: MouseEvent) {
-  return event.shiftKey || event.metaKey || event.ctrlKey; // maybe event.altKey
-}
+import { getUpdatedPositionsMemo, isMultSelKeyDown } from './utils';
 
 const DEFAULT_FIT_PADDING: PointTuple = [50, 50];
 const DEFAULT_ANIMATION_DURATION = 1;
@@ -29,6 +23,8 @@ export class MapHandler {
   originalPan: cytoscape.Position | undefined;
 
   panning: boolean = false;
+
+  requestAnimationId: number | undefined;
 
   onGraphContainerMouseDownBound = this.onGraphContainerMouseDown.bind(this);
   onGraphContainerMouseMoveBound = this.onGraphContainerMouseMove.bind(this);
@@ -271,40 +267,50 @@ export class MapHandler {
   private updateGeographicPositions(
     nodes = this.cy?.nodes() ?? ([] as unknown as cytoscape.NodeCollection)
   ) {
-    const positions: cytoscape.NodePositionMap = Object.fromEntries(
-      nodes
-        .map((node) => {
-          return [node.id(), this.getGeographicPosition(node)];
+    const updatePositions = (
+      nodes = this.cy?.nodes() ?? ([] as unknown as cytoscape.NodeCollection)
+    ) => {
+      const positions: cytoscape.NodePositionMap = Object.fromEntries(
+        nodes
+          .map((node) => {
+            return [node.id(), this.getGeographicPosition(node)];
+          })
+          .filter(([_id, position]) => {
+            return !!position;
+          })
+      );
+
+      // update only positions which have changed, for cytoscape-edgehandles compatibility
+      const currentPositions: cytoscape.NodePositionMap = Object.fromEntries(
+        nodes.map((node) => {
+          return [node.id(), { ...node.position() }];
         })
-        .filter(([_id, position]) => {
-          return !!position;
+      );
+      const updatedPositions = getUpdatedPositionsMemo(
+        currentPositions,
+        positions
+      );
+
+      // hide nodes without position
+      const nodesWithoutPosition = nodes.filter(
+        (node) => !positions[node.id()]
+      );
+      nodesWithoutPosition.addClass(HIDDEN_CLASS).style('display', 'none');
+
+      this.cy
+        ?.layout({
+          name: 'preset',
+          positions: updatedPositions,
+          fit: false,
         })
-    );
+        .run();
+    };
 
-    // update only positions which have changed, for cytoscape-edgehandles compatibility
-    const currentPositions: cytoscape.NodePositionMap = Object.fromEntries(
-      nodes.map((node) => {
-        return [node.id(), { ...node.position() }];
-      })
+    this.requestAnimationId = window.requestAnimationFrame(
+      function animatedUpdateGeographicPositions() {
+        updatePositions(nodes);
+      }
     );
-    const updatedPositions: cytoscape.NodePositionMap = Object.fromEntries(
-      Object.entries(positions).filter(([id, position]) => {
-        const currentPosition = currentPositions[id];
-        return !MapHandler.arePositionsEqual(currentPosition, position);
-      })
-    );
-
-    // hide nodes without position
-    const nodesWithoutPosition = nodes.filter((node) => !positions[node.id()]);
-    nodesWithoutPosition.addClass(HIDDEN_CLASS).style('display', 'none');
-
-    this.cy
-      ?.layout({
-        name: 'preset',
-        positions: updatedPositions,
-        fit: false,
-      })
-      .run();
   }
 
   /**
@@ -519,18 +525,5 @@ export class MapHandler {
     }
 
     return this.map?.latLngToContainerPoint(lngLat);
-  }
-
-  /**
-   * @private
-   * @param {cytoscape.Position} position1
-   * @param {cytoscape.Position} position2
-   * @return {boolean}
-   */
-  private static arePositionsEqual(
-    position1: cytoscape.Position,
-    position2: cytoscape.Position
-  ) {
-    return position1.x === position2.x && position1.y === position2.y;
   }
 }

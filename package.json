@@ -48,5 +48,8 @@
     "rollup-plugin-terser": "^6.1.0",
     "rollup-plugin-visualizer": "^4.0.4",
     "typescript": "^4.5.4"
+  },
+  "dependencies": {
+    "memoize-one": "^6.0.0"
   }
 }
