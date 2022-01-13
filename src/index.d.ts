@@ -9,9 +9,9 @@ export as namespace cytoscapeLeaflet;
 declare namespace cytoscapeLeaflet {
   interface CyMap {
     map: null | L.Map;
-    cy: null | cy.Core;
+    cy: null | cytoscape.Core;
 
-    fit(nodes: cy.NodeSingular[], options: L.FitBoundsOptions): void;
+    fit(nodes: cy.ElementDefinition[], options: L.FitBoundsOptions): void;
 
     updateGeographicPositions(nodes: cy.NodeSingular): void;
 
@@ -43,7 +43,7 @@ declare global {
       };
     };
 
-    interface Core extends cy.Core {
+    interface Core {
       L(
         mapConfig: L.MapOptions,
         config: MapHandlerOptions
