@@ -398,6 +398,7 @@ export class MapHandler {
    * @param {MouseEvent} event
    */
   private onGraphContainerWheel(event: MouseEvent) {
+    event.preventDefault();
     this.dispatchMapEvent(event);
   }
 
@@ -456,6 +457,7 @@ export class MapHandler {
    * @param {MouseEvent} event
    */
   private dispatchMapEvent(event: MouseEvent) {
+    debugger;
     if (
       event.target === this.mapContainer ||
       // @ts-ignore
