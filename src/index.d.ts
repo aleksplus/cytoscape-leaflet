@@ -10,6 +10,8 @@ declare namespace cytoscapeLeaflet {
   interface CyMap {
     map: null | L.Map;
     cy: null | cytoscape.Core;
+    originalZoom: number;
+    originalPan: cy.Position;
 
     fit(nodes: cy.ElementDefinition[], options: L.FitBoundsOptions): void;
 
