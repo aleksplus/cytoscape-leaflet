@@ -34,6 +34,7 @@ export class MapHandler {
   onGraphAddBound = this.onGraphAdd.bind(this);
   onGraphResizeBound = this.onGraphResize.bind(this);
   onGraphDragFreeBound = this.onGraphDragFree.bind(this);
+  onDataChangeBound = this.onDataChange.bind(this);
 
   /**
    * @param {cytoscape.Core} cy
@@ -81,6 +82,7 @@ export class MapHandler {
     this.cy.on('add', this.onGraphAddBound);
     this.cy.on('resize', this.onGraphResizeBound);
     this.cy.on('dragfree', this.onGraphDragFreeBound);
+    this.cy.on('data', this.onDataChangeBound);
 
     // Map container
     this.mapContainer = document.createElement('div');
@@ -147,6 +149,7 @@ export class MapHandler {
       this.cy.off('add', this.onGraphAddBound);
       this.cy.off('resize', this.onGraphResizeBound);
       this.cy.off('dragfree', this.onGraphDragFreeBound);
+      this.cy.off('data', this.onDataChangeBound);
 
       // Cytoscape config
       this.cy.autoungrabify(this.originalAutoungrabify);
@@ -411,6 +414,13 @@ export class MapHandler {
 
   /**
    * @private
+   */
+  private onDataChange() {
+    this.updateGeographicPositions();
+  }
+
+  /**
+   * @private
    * @param {cytoscape.EventObject} event
    */
   private onGraphAdd(event: cytoscape.EventObject) {
@@ -457,7 +467,6 @@ export class MapHandler {
    * @param {MouseEvent} event
    */
   private dispatchMapEvent(event: MouseEvent) {
-    debugger;
     if (
       event.target === this.mapContainer ||
       // @ts-ignore
