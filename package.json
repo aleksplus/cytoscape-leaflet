@@ -14,6 +14,13 @@
   "repository": "github:aleksplus/cytoscape-leaflet",
   "main": "src/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/cytoscape-leaflet.js",
+    "dist/cytoscape-leaflet.min.js",
+    "dist/index.d.ts",
+    "dist/index.ts",
+    "README.md"
+  ],
   "browser": "dist/cytoscape-leaflet.min.js",
   "scripts": {
     "build": "rimraf dist && rollup -c",
